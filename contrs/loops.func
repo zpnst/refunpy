@@ -1,0 +1,35 @@
+int plus(int x, int y) inline {
+    return x + y;
+}
+
+int mult(int x, int y) inline {
+    return x * y;
+}
+
+() recv_internal() impure {
+    (int a, int b, int c) = (10, 100, 1);
+
+    while (a > 5) {
+        a -= 1;
+        b = b - 10;
+        if (b > 50) {
+            a -= 1;
+        }
+        b = mult(b, 25);
+
+        repeat(2) {
+            c = plus(c, 1);
+        }
+
+        while (b >= 1000) {
+            b -= 100;
+        }
+    }
+
+    int times = c;
+    int res = 0;
+
+    repeat(times) {
+        res += 42;
+    }
+}
