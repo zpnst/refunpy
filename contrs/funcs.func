@@ -23,9 +23,9 @@ int disc(int a, int b, int c) inline {
     int a = 1;
     int b = 20;
 
-    int res1 = plus(a, 0).disc(plus(1, 0).plus(1).plus(1).plus(1).plus(1), mult(a, 0).plus(2));
-    int res2 = (3 * mult(plus(plus(mult(disc(a, 5, plus(a * a - b, a + 1)), b), 1), 2), ((b * 2) - 1))) / 10;
-    int res3 = plus(1, 0).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1);
+    ;; int res1 = plus(a, 0).disc(plus(1, 0).plus(1).plus(1).plus(1).plus(1), mult(a, 0).plus(2));
+    int res2 = ((3 * mult(plus(plus(mult(disc(a, 5, plus(a * a - b, a + 1)), b), 1), 2), ((b * 2) - 1))) / 10);
+    ;; int res3 = plus(1, 0).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1);
 
-    (int p, int m, int s, int d) = plus_and_mult_and_sub_and_div(10, 2);
+    ;; (int p, int m, int s, int d) = plus_and_mult_and_sub_and_div(10, 2);
 }

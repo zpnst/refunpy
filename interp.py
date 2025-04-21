@@ -7,6 +7,8 @@ from libs.refalpy.refalpy import refal
 
 
 imports = {
+    '_or': lambda arg: (arg[0] or arg[1],),
+    '_and': lambda arg: (arg[0] and arg[1],),
     'eq': lambda arg: (arg[0] == arg[1],),
     'neq': lambda arg: (arg[0] != arg[1],),
     'grt': lambda arg: (arg[0] > arg[1],),
@@ -17,27 +19,32 @@ imports = {
     'sub': lambda arg: (arg[0] - arg[1],),
     'mul': lambda arg: (arg[0] * arg[1],),
     'div': lambda arg: (arg[0] // arg[1],),
-    'type': lambda arg: (type(arg[0]).__name__,),
     'joinfvar': lambda arg: (f"@{arg[0]}@{arg[1]}", ),
-    'cond': lambda arg: (arg[1], ) if arg[0] else (arg[2], ),
-    
+    'fork': lambda arg: (arg[1], ) if arg[0] else (arg[2], ),
+    'type': lambda arg: ('int',) if isinstance(arg[0], int) else ('slice',) if\
+        isinstance(arg[0], str) and arg[0].startswith('"') and arg[0].endswith('"')\
+            else ('var',) if isinstance(arg[0], str) else type(arg[0]).__name__,
+
     'expand': lambda arg: arg[0] * int(arg[1][0]),
     
-    'prout': lambda arg: (print("-- STDOUT:", arg, "\n"), ())[~0],
-    'pexit': lambda arg: (print("-- STDOUT:", arg, "\n"), sys.exit(0), ())[~0],
+    'prout': lambda arg: (eval(f"print({arg[0]}, end='')"), ())[~0],
+
+    # 'prout': lambda arg: (print("-- STDOUT:", arg, "\n"), ())[~0],
+    # 'pexit': lambda arg: (print("-- STDOUT:", arg, "\n"), sys.exit(0), ())[~0],
 }
 
 @refal(imports)
 def refun():
     
-    p[e.x] = prout[e.x]
-    pp[e.x] = pexit[e.x]
+    # p[e.x] = prout[e.x]
+    # pp[e.x] = pexit[e.x]
     
     
     # -- CMD
     
     cmd['int'] = 'push'
-    cmd['str'] = 'load'
+    cmd['slice'] = 'push'
+    cmd['var'] = 'load'
     
     
     # -- JOIN
@@ -63,7 +70,9 @@ def refun():
     
     # -- GLOV
     
-    glob[{'func', {s.fnm, {e.specs}, {e.args}, {e.ret}}, {e.body}}, e.oth] = {s.fnm, join[{make_tvars[e.args]}, {stat[e.body]}]}, glob[e.oth]
+    glob[{'func', {s.fnm, {e.specs}, {e.args}, {e.ret}}, {e.body}}, e.oth] =\
+        {s.fnm, join[{make_tvars[e.args]}, {stat[e.body]}]}, glob[e.oth]
+        
     glob = _
     
     
@@ -110,7 +119,8 @@ def refun():
     # -- DOLOOP
 
     doloop[s.ctxf, {{t.cond, t.body, t.oth}, {e.stack, s.bl}, t.env, t.fs}, t.body] =\
-        cond[s.bl, {steps[{s.ctxf, t.body, {e.stack}, t.env, t.fs}, {t.cond, t.body, t.oth}]}, {{e.stack}, t.env, t.fs}]
+        fork[s.bl, {steps[{s.ctxf, t.body, {e.stack}, t.env, t.fs}, \
+            {t.cond, t.body, t.oth}]}, {{e.stack}, t.env, t.fs}]
     
     
     # -- STEPS
@@ -133,7 +143,8 @@ def refun():
     stat[{'while', t.cond, {e.body}}, e.oth] =\
         'condrep', {expr[t.cond]}, {stat[e.body]}, {stat[e.oth]}
         
-    stat[{'repeat', s.ti, {e.body}}, e.oth] = expr[s.ti], 'rep', {stat[e.body]}, stat[e.oth]
+    stat[{'repeat', t.expr, {e.body}}, e.oth] = expr[t.expr], 'rep', {stat[e.body]}, stat[e.oth]
+    stat[{'strdump', s.str}, e.oth] = expr[s.str], 'strdump', stat[e.oth]
     stat[{'return', {e.rets}}] = exprs[e.rets], 'ret'
     stat = _
 
@@ -154,6 +165,8 @@ def refun():
     expr[{'<', t.a, t.b}] = expr[t.a], expr[t.b], 'less'
     expr[{'<=', t.a, t.b}] = expr[t.a], expr[t.b], 'lesseq'
     expr[{'>=', t.a, t.b}] = expr[t.a], expr[t.b], 'grteq'
+    expr[{'|', t.a, t.b}] = expr[t.a], expr[t.b], 'or'
+    expr[{'&', t.a, t.b}] = expr[t.a], expr[t.b], 'and'
     expr[s.val] = {cmd[type[s.val]], s.val}
     expr[{e.exprs}] = exprs[e.exprs]
     
@@ -164,8 +177,8 @@ def refun():
     interp[s.ctxf, {t.cmd, e.code}, t.stack, t.env, t.flst] =\
         interp[s.ctxf, step[s.ctxf, t.cmd, {e.code}, t.stack, t.env, t.flst]]
         
-    interp[s.ctxf, {}, {}, t.env, t.flst] = t.env
     interp[s.ctxf, {}, t.stack, t.env, t.flst] = t.stack, t.env
+    interp[s.ctxf, {}, {}, t.env, t.flst] = {}, t.env
       
     
     # -- STEP
@@ -181,9 +194,12 @@ def refun():
     step[s.ctxf, 'less', t.c, {e.stack, s.x, s.y}, e.ef] = t.c, {e.stack, less[s.x, s.y]}, e.ef
     step[s.ctxf, 'lesseq', t.c, {e.stack, s.x, s.y}, e.ef] = t.c, {e.stack, lesseq[s.x, s.y]}, e.ef
     step[s.ctxf, 'grteq', t.c, {e.stack, s.x, s.y}, e.ef] = t.c, {e.stack, grteq[s.x, s.y]}, e.ef
+    step[s.ctxf, 'or', t.c, {e.stack, s.x, s.y}, e.ef] = t.c, {e.stack, _or[s.x, s.y]}, e.ef
+    step[s.ctxf, 'and', t.c, {e.stack, s.x, s.y}, e.ef] = t.c, {e.stack, _and[s.x, s.y]}, e.ef
+    step[s.ctxf, 'strdump', t.c, {e.stack, s.str}, e.ef] = prout[s.str], t.c, {e.stack}, e.ef
     
     step[s.ctxf, 'cond',  {{e.c}, e.othc}, {e.stack, s.bl}, e.ef] =\
-        join[cond[s.bl, e.c], {e.othc}], {e.stack}, e.ef
+        join[fork[s.bl, e.c], {e.othc}], {e.stack}, e.ef
         
     step[s.ctxf, 'rep',  {{e.c}, e.othc}, {e.stack, s.x}, e.ef] =\
         {expand[{e.c}, {s.x}], e.othc}, {e.stack}, e.ef
@@ -212,7 +228,7 @@ def refun():
 
 def make_dict(envi: tuple) -> dict:
     envi_dict = {}
-    for (key, value) in envi[0]:
+    for (key, value) in envi[1]:
         parts = key.split('@')
         func_name, var_name = parts[1], parts[2]
         if func_name not in envi_dict:
@@ -224,17 +240,20 @@ def main():
     argsp = argparse.ArgumentParser(description="FunC Interpreter")
     argsp.add_argument("filename", help="FunC source code filename")
     argsp.add_argument("--ast-on", action="store_true", help="Enable AST output")
+    argsp.add_argument("--env-on", action="store_true", help="Enable ENV output")
     
     args = argsp.parse_args()
 
     ast = get_ast(args.filename)
-    
+
     if args.ast_on:
         print("-- AST:", ast, "\n")
     
     interp_res = refun('main', ast)
-    envi_dict = make_dict(interp_res)
-    print("-- RES: ", json.dumps(envi_dict, indent=4))
+    
+    if args.env_on:
+        envi_dict = make_dict(interp_res)
+        print("-- RES: ", json.dumps(envi_dict, indent=4))
       
 if __name__ == "__main__":  
     main()

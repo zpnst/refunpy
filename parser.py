@@ -31,6 +31,8 @@ mkfoo = to(lambda ret, name, args, specs, body: ('func',\
 
 mkinc = to(lambda path: ('include', path))
 
+mkstrdump = to(lambda string: ('strdump', string))
+
 var = seq(tok(r'[a-zA-Z][a-zA-Z0-9_]*'), mkvar)
 path = seq(tok(r'[a-zA-Z0-9_/.]+'), mkvar)
 num = seq(tok(r'-?\d+'), mknum)
@@ -72,6 +74,7 @@ factor = alt(
 )
 
 term = left(alt(
+    seq(term, tok(r'&|\|'), factor, mkbop),
     seq(term, tok(r'[!=]='), factor, mkbop),
     seq(term, tok(r'[><]'), factor, mkbop),
     seq(term, tok(r'[><]='), factor, mkbop),
@@ -87,7 +90,7 @@ expr = left(alt(
 ))
 
 iter_expr = alt(
-    seq(tok(r'repeat'), skip(r'\('), atoms, skip(r'\)'), skip(r'{'),\
+    seq(tok(r'repeat'), skip(r'\('), expr, skip(r'\)'), skip(r'{'),\
         group(many(stat)), skip(r'}'), skip(r';?'), mkloop),
     
     seq(tok(r'while'), skip(r'\('), expr, skip(r'\)'), skip(r'{'),\
@@ -121,12 +124,13 @@ stat = alt(
     seq(var, tok(r'[*-/\+]'), skip(r'='), expr, skip(r';'), mksassign),
     seq(skip(r'return'), skip(r'\(?'), group(many(seq(expr, skip(r',?')))), skip(r'\)?'), skip(r';'), mkret),
     seq(fcall, skip(r';')),
+    seq(skip(r'~strdump'), skip(r'\('), tok(r'[a-zA-Z!?,.:;"#\-\+\*\\ ]*'), skip(r'\)?'), skip(r';'), mkstrdump),
     iter_expr,
     cond_expr,
 )
 
 rsrc = lambda path: "".join([line for line in open(path, mode="r").readlines() \
-    if not line.strip().startswith(';;')]).replace("\n", "").replace(" ", "")
+    if not line.strip().startswith(';;')])
 
 
 def prepare_ast(ast: tuple) -> tuple:
