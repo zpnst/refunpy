@@ -2,11 +2,13 @@ int plus(int x, int y) inline {
     return x + y;
 }
 
+
 int mult(int x, int y) inline {
     return x * y;
 }
 
-() recv_internal() impure {
+
+() main() impure {
     (int a, int b, int c) = (10, 100, 1);
 
     while (a > 5) {
@@ -32,4 +34,18 @@ int mult(int x, int y) inline {
     repeat(times) {
         res += 42;
     }
+
+    int i = 1;
+    while (i != 5) {
+        i += 1;
+        int j = 0;
+        while (j != 6) {
+            j += 2;
+            int k = 0;
+            while (k != 9) {
+                k += 3;
+            }
+        }
+    }
+
 }

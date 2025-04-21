@@ -2,9 +2,11 @@ int plus(int x, int y) inline {
     return x + y;
 }
 
+
 int mult(int x, int y) inline {
     return x * y;
 }
+
 
 int disc(int a, int b, int c) inline {  
     int disc = b * b - 4 * a * c;
@@ -16,7 +18,8 @@ int disc(int a, int b, int c) inline {
     return (x + y, x * y, x - y, x / y);
 }
 
-() recv_internal() impure {
+
+() main() impure {
     int a = 1;
     int b = 20;
 

@@ -25,7 +25,9 @@ mkret = to(lambda ret: ('return', ret))
 mkcall = to(lambda fn, args: ('fcall', fn, args))
 mkchcall = to(lambda fns: ('chain_call', fns))
 mkfooargs = to(lambda x, y: (x, y))
-mkfoo = to(lambda ret, name, args, specs, body: ('func', (name, specs, args, ret), body))
+
+mkfoo = to(lambda ret, name, args, specs, body: ('func',\
+    (name, specs, args, ret), body))
 
 mkinc = to(lambda path: ('include', path))
 
@@ -46,7 +48,8 @@ block = group(many(seq(stat, ws)))
 fcall = seq(var, skip(r'\('), group(many(seq(expr, skip(r',?')))), skip(r'\)'), mkcall)
 
 fdec = seq(skip(r'\(?'), group(many(seq(type, skip(r',?')))), skip(r'\)?'),
-        var, skip(r'\('), group(many(seq(type, var, skip(r',?'), mkfooargs))), skip(r'\)'), group(many(seq(specs, ws))), skip(r'{'), block, skip(r'}'), mkfoo)
+        var, skip(r'\('), group(many(seq(type, var, skip(r',?'), mkfooargs))), skip(r'\)'),\
+            group(many(seq(specs, ws))), skip(r'{'), block, skip(r'}'), mkfoo)
 
 glob = alt(
     fdec,
@@ -69,7 +72,7 @@ factor = alt(
 )
 
 term = left(alt(
-    seq(term, tok(r'=='), factor, mkbop),
+    seq(term, tok(r'[!=]='), factor, mkbop),
     seq(term, tok(r'[><]'), factor, mkbop),
     seq(term, tok(r'[><]='), factor, mkbop),
     seq(term, tok(r'\*'), factor, mkbop),
@@ -84,21 +87,36 @@ expr = left(alt(
 ))
 
 iter_expr = alt(
-    seq(tok(r'repeat'), skip(r'\('), atoms, skip(r'\)'), skip(r'{'), group(many(stat)), skip(r'}'), skip(r';?'), mkloop),
-    seq(tok(r'while'), skip(r'\('), expr, skip(r'\)'), skip(r'{'), group(many(stat)), skip(r'}'), skip(r';?'), mkloop),
-    seq(tok(r'do'), skip(r'{'), group(many(stat)), skip(r'}'), skip(r'until'), skip(r'\('), expr, skip(r'\)'), skip(r';?'), mkdoloop),
+    seq(tok(r'repeat'), skip(r'\('), atoms, skip(r'\)'), skip(r'{'),\
+        group(many(stat)), skip(r'}'), skip(r';?'), mkloop),
+    
+    seq(tok(r'while'), skip(r'\('), expr, skip(r'\)'), skip(r'{'),\
+        group(many(stat)), skip(r'}'), skip(r';?'), mkloop),
+    
+    seq(tok(r'do'), skip(r'{'), group(many(stat)), skip(r'}'),\
+        skip(r'until'), skip(r'\('), expr, skip(r'\)'), skip(r';?'), mkdoloop),
 )
 
 cond_expr = alt(
-    seq(skip(r'if'), skip(r'\('), expr, skip(r'\)'), skip(r'{'), many(stat), skip(r'}'), cond_expr, skip(r';?'), mkifcond),
-    seq(skip(r'if'), skip(r'\('), expr, skip(r'\)'), skip(r'{'), many(stat), skip(r'}'), skip(r';?'), mksifcond),
-    seq(skip(r'elseif'), skip(r'\('), expr, skip(r'\)'), skip(r'{'), many(stat), skip(r'}'), cond_expr, skip(r';?'), mkifcond),
-    seq(skip(r'elseif'), skip(r'\('), expr, skip(r'\)'), skip(r'{'), many(stat), skip(r'}'), skip(r';?'), mksifcond),
+    seq(skip(r'if'), skip(r'\('), expr, skip(r'\)'), skip(r'{'), many(stat),\
+        skip(r'}'), cond_expr, skip(r';?'), mkifcond),
+    
+    seq(skip(r'if'), skip(r'\('), expr, skip(r'\)'), skip(r'{'), many(stat), \
+        skip(r'}'), skip(r';?'), mksifcond),
+    
+    seq(skip(r'elseif'), skip(r'\('), expr, skip(r'\)'), skip(r'{'), many(stat),\
+        skip(r'}'), cond_expr, skip(r';?'), mkifcond),
+    
+    seq(skip(r'elseif'), skip(r'\('), expr, skip(r'\)'), skip(r'{'), many(stat),\
+        skip(r'}'), skip(r';?'), mksifcond),
+    
     seq(tok(r'else'), skip(r'{'), many(stat), skip(r'}'), skip(r';?'), mkecond),
 )
 
 stat = alt(
-    seq(skip(r'\(?'), group(many(seq(type, var, skip(r',?'), mkfooargs))), skip(r'\)?'), skip(r'='), skip(r'\(?'), group(many(seq(expr, skip(r',?'), mkvar))), skip(r'\)?'), skip(r';'), mkbbind),
+    seq(skip(r'\(?'), group(many(seq(type, var, skip(r',?'), mkfooargs))), skip(r'\)?'),\
+        skip(r'='), skip(r'\(?'), group(many(seq(expr, skip(r',?'), mkvar))), skip(r'\)?'), skip(r';'), mkbbind),
+    
     seq(var, skip(r'='), expr, skip(r';'), mkassign),
     seq(var, tok(r'[*-/\+]'), skip(r'='), expr, skip(r';'), mksassign),
     seq(skip(r'return'), skip(r'\(?'), group(many(seq(expr, skip(r',?')))), skip(r'\)?'), skip(r';'), mkret),
