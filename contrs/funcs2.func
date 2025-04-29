@@ -1,0 +1,14 @@
+const K = 200;
+
+int sum(int x, int y) inline {
+    return  x + y;
+}
+
+(int, int) mult_sum(int x, int y) inline {
+    return (sum(x * y, x * y) + 200, (sum(x * y, x * y) + 2) / 3);
+}
+
+() main() {
+    (int res_1, int res_2) = mult_sum(1, 2);
+    return ();
+}
