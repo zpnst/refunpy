@@ -1,10 +1,11 @@
+#include "includes/stdlib.func";
 
 () main() impure {
     int a = 42;
     int b = 137;
     int c = 271828;
     if ((a < 42 + 2) & ((b == 137 + 1) | (c == 271828))) {
-        ~strdump("Hello, World!\n");
+        ~logStr("Hello, World!\n");
     }
     return ();
 }

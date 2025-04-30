@@ -11,7 +11,6 @@
     return c;
 }
 
-
 (int) do_cond_2(int a, int c) inline {
     if ((a + 100) >= 500) {
         c *= 2;
@@ -29,7 +28,6 @@
     return c;
 }
 
-
 (int) do_cond_3(int a, int c) inline {
     if ((a + 100) >= 500) {
         c *= 2;
@@ -38,7 +36,6 @@
     }
     return c;
 }
-
 
 (int) do_cond_4(int a, int c) inline {
     if ((a + 100) >= 500) {
@@ -55,7 +52,6 @@
     
     return c;
 }
-
 
 () main() impure {
     int c = 10;

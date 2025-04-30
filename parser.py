@@ -30,17 +30,22 @@ mkfooargs = to(lambda x, y: (x, y))
 
 mkconst = to(lambda v, e: ('const', v, e))
 
-mkfoo = to(lambda ret, name, args, specs, body: ('func',\
+mkfoo = to(lambda ret, name, args, specs, body: ('func',
     (name, specs, args, ret), body))
+
+mkasm = to(lambda ret, name, args, specs, instr: ('func',
+    (name, specs, args, ret), (('intrinsic', args, instr),)))
 
 mkinc = to(lambda path: ('include', path))
 
 mkstrdump = to(lambda string: ('strdump', string))
 
 var = seq(tok(r'[a-zA-Z][a-zA-Z0-9_]*'), mkvar)
+fnm = seq(tok(r'[a-zA-Z0-9_~]+'), mkvar)
+asmins = seq(tok(r'[a-zA-Z0-9 ]+'), mkvar)
 path = seq(tok(r'[a-zA-Z0-9_/.]+'), mkvar)
 num = seq(tok(r'-?\d+'), mknum)
-string = seq(tok(r'\"[a-zA-Z0-9!,]*\"'), mkstr)
+string = seq(tok(r'\"[a-zA-Z0-9!, \\#]*\"'), mkstr)
 
 typ = alt(
     tok(r'int'),
@@ -64,14 +69,22 @@ stmt = lambda s: stmt(s)
 cond_expr = lambda s: cond_expr(s)
 
 block = group(many(stmt))
-fcall = seq(var, skip(r'\('), group(many(seq(expr, skopt(r',')))), skip(r'\)'), mkcall)
+fcall = seq(fnm, skip(r'\('), group(many(seq(expr, skopt(r',')))), skip(r'\)'), mkcall)
 
-fdec = seq(skopt(r'\('), group(many(seq(typ, skopt(r',')))), skopt(r'\)'), var,
-           skip(r'\('), group(many(seq(typ, var, skopt(r','), mkfooargs))), skip(r'\)'),
-            group(many(seq(specs, ws))), skip(r'{'), block, skip(r'}'), mkfoo)
+fdec = seq(
+        skopt(r'\('), group(many(seq(typ, skopt(r',')))), skopt(r'\)'), fnm,
+        skip(r'\('), group(many(seq(typ, var, skopt(r','), mkfooargs))), 
+        skip(r'\)'), group(many(seq(specs, ws))), skip(r'{'), block, skip(r'}'), mkfoo)
+
+asmdec = seq(
+            skopt(r'\('), group(many(seq(typ, skopt(r',')))), 
+            skopt(r'\)'), fnm, skip(r'\('), group(many(seq(typ, var, skopt(r','), mkfooargs))),
+            skip(r'\)'), group(many(seq(specs, ws))), skip(r'asm'), skip(r'"'), asmins, skip(r'"'), 
+            skip(r';'), mkasm)
 
 glob = alt(
     fdec,
+    asmdec,
     seq(skip(r'const'), var, skip(r'='), expr, skip(r';'), mkconst),
     seq(skip(r'#'), skip(r'include'), skip(r'"'), path, skip(r'"'), skip(r';'), mkinc)  
 )
@@ -150,14 +163,9 @@ stmt = alt(
         skopt(r'\)'), skip(r';'), mkret),
     
     seq(fcall, skip(r';')),
-    # seq(skip(r'~strdump'), skip(r'\('), tok(r'[a-zA-Z!?,.:;"#\-\+\*\\ ]*'), skopt(r'\)'), skip(r';'), mkstrdump),
     iter_expr,
     cond_expr,
 )
-
-rsrc = lambda path: "".join([line for line in open(path, mode="r").readlines()
-    if not line.strip().startswith(';;')])
-
 
 def chek_ast(ast: tuple) -> tuple:
     special_funcs = [f for f in ast if f[0] == 'func' and f[1][0] in ('recv_internal', 'main')]
@@ -165,13 +173,12 @@ def chek_ast(ast: tuple) -> tuple:
         raise ValueError("AST must contain exactly one entry point 'recv_internal' or 'main'")
     return ast
 
-
 def main_ast(path: str):
-    src = rsrc(path)
+    src = re.sub(r'{-[\s\S]*?-}|;;.*', '', open(path).read())
     ast = chek_ast(parse(src, main).stack[0])
     return ast
 
 def lib_ast(path: str):
-    src = rsrc(path)
+    src = re.sub(r'{-[\s\S]*?-}|;;.*', '', open(path).read())
     ast = parse(src, main).stack[0]
     return ast

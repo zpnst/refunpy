@@ -5,7 +5,7 @@ const A = 10;
     return x + 2;
 }
 
-#include "includes/math.func";
+#include "includes/mathlib.func";
 
 () main() {
     (int x,int y) = (

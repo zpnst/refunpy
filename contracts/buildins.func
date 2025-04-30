@@ -1,0 +1,9 @@
+() BUILDIN_FUNC_NAME(slice value) impure asm "STRDUMP";
+
+() printHello() {
+    BUILDIN_FUNC_NAME("Hello, World!\n\n");
+}
+
+() main() {
+    printHello();
+}
