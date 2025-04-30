@@ -14,7 +14,7 @@ mkbop = to(lambda a, o, b: (o, a, b))
 mkbind = to(lambda t, v, e: ('bind', ((t, v),), (e,)))
 mkbbind = to(lambda b, e: ('bind', b, e))
 mkassign = to(lambda v, e: ('assign', v, e))
-mksassign = to(lambda v, s, e: ('assign', v, (s, v, e)))
+mksassign = to(lambda v, s, e: ('assign', ((v,),), ((s, (v,), e),)))
 
 mkloop = to(lambda lname, cond, body: (lname, cond, body))
 mkdoloop = to(lambda body, cond: ('dountil', cond, body))
@@ -84,7 +84,7 @@ atoms = alt(
 )
 
 factor = alt(
-    list_of(fcall, skopt(r'\.')),
+    group(list_of(fcall, skopt(r'\.'))),
     seq(var, mkwrp),
     seq(num, mkwrp),
     seq(string, mkwrp),
@@ -166,7 +166,12 @@ def chek_ast(ast: tuple) -> tuple:
     return ast
 
 
-def get_ast(path: str):
+def main_ast(path: str):
     src = rsrc(path)
     ast = chek_ast(parse(src, main).stack[0])
+    return ast
+
+def lib_ast(path: str):
+    src = rsrc(path)
+    ast = parse(src, main).stack[0]
     return ast

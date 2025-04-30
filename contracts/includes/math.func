@@ -1,0 +1,27 @@
+const intPIx1000 = 3145;
+const intEx1000 = 2718;
+
+int sum(int x, int y) {
+    return x + y;
+}
+
+int sub(int x, int y) {
+    return x - y;
+}
+
+int mul(int x, int y) {
+    return x * y;
+}
+
+int div(int x, int y) {
+    return x / y;
+}
+
+int Z() {
+    return 1;
+}
+
+int S(int z) {
+    return z + 1;
+}
+

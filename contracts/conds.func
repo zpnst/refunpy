@@ -1,0 +1,84 @@
+(int) do_cond_1(int a, int c) inline {
+    if ((a + 100) >= 500) {
+        c *= 2;
+    } elseif ((a + 200) >= 500) {
+         c *= 3;
+    } elseif ((a + 300) >= 500) {
+         c *= 4;
+    } else {
+        c = c * 5;
+    }
+    return c;
+}
+
+
+(int) do_cond_2(int a, int c) inline {
+    if ((a + 100) >= 500) {
+        c *= 2;
+    } else {
+        if ((a + 200) >= 500) {
+            c *= 3;
+        } else {
+            if ((a + 300) >= 500) {
+                c *= 4;
+            } else {
+                c = c * 5;
+            }
+        }
+    }
+    return c;
+}
+
+
+(int) do_cond_3(int a, int c) inline {
+    if ((a + 100) >= 500) {
+        c *= 2;
+    } else {
+        c *= 10;
+    }
+    return c;
+}
+
+
+(int) do_cond_4(int a, int c) inline {
+    if ((a + 100) >= 500) {
+        c *= 2;
+    } elseif ((a + 200) >= 500) {
+        if ((a + 300) >= 500) {
+             c *= 4;
+        } else {
+            c = c * 5;
+        }
+    } else {
+        c *= 100;
+    }
+    
+    return c;
+}
+
+
+() main() impure {
+    int c = 10;
+
+    int c1_1 = do_cond_1(401, c);
+    int c1_2 = do_cond_1(301, c);
+    int c1_3 = do_cond_1(201, c);
+    int c1_4 = do_cond_1(101, c);
+
+    int c2_1 = do_cond_2(401, c);
+    int c2_2 = do_cond_2(301, c);
+    int c2_3 = do_cond_2(201, c);
+    int c2_4 = do_cond_2(101, c);
+
+    int c3_1 = do_cond_3(401, c);
+    int c3_2 = do_cond_3(301, c);
+    int c3_3 = do_cond_3(201, c);
+    int c3_4 = do_cond_3(101, c);
+
+    int c4_1 = do_cond_4(401, c);
+    int c4_2 = do_cond_4(301, c);
+    int c4_3 = do_cond_4(201, c);
+    int c4_4 = do_cond_4(101, c);
+
+    return ();
+}

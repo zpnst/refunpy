@@ -2,7 +2,7 @@ import sys
 import json
 import argparse
 
-from parser import get_ast
+from parser import main_ast, lib_ast
 from libs.refalpy.refalpy import refal
 
 
@@ -22,12 +22,14 @@ imports = {
     '_or': lambda arg: (arg[0] or arg[1],),
     '_and': lambda arg: (arg[0] and arg[1],),
 
-
+    'cond': lambda arg: (arg[1], ) if arg[0] else (arg[2], ),
+    'expand': lambda arg: (arg[0] * int(arg[1][0]),),
     
     'typeof': lambda arg: ('int',) if isinstance(arg[0], int) else ('slice',) if\
         isinstance(arg[0], str) and arg[0].startswith('"') and arg[0].endswith('"')\
             else ('var',) if isinstance(arg[0], str) else type(arg[0]).__name__,
             
+    'mkast': lambda path: lib_ast("contracts/" + path[0]),
     'prout': lambda arg: (print("-- STDOUT:", arg, "\n"), ())[~0],
     'pexit': lambda arg: (print("-- STDOUT:", arg, "\n"), sys.exit(0), ())[~0],
 }
@@ -38,16 +40,15 @@ def refun():
     p[e.x] = prout[e.x]
     pp[e.x] = pexit[e.x]
     
-    unpack[{s.v}] = s.v
-    unpack[{{s.v}}] = s.v
-    unpack[e.e] = e.e
+    u[{e.e}] = u[e.e]
+    u[s.s] = s.s
     
     join[{e.l}, {e.r}] = {e.l, e.r}
-    
-    mkfargs[{{s.ty, s.var}, e.otha}, {t.val, e.othv}, t.octx, t.ctx] =\
-        mkfargs[{e.otha}, {e.othv}, t.octx, put[t.ctx, s.var, expr[t.val, t.octx, {}]]]
+
+    mkfargs[{{s.ty, s.var}, e.otha}, {t.val, e.othv}, t.octx, t.ctx, t.fns] =\
+        mkfargs[{e.otha}, {e.othv}, t.octx, put[t.ctx, s.var, expr[t.val, t.octx, t.fns]], t.fns]
         
-    mkfargs[{}, {}, t.octx, t.ctx] = t.ctx
+    mkfargs[{}, {}, t.octx, t.ctx, t.fns] = t.ctx
     
     get[{'glob', t.g, 'funcs', {e.e, t.l}}, s.key] =\
         get[join[t.g, t.l], s.key]
@@ -63,8 +64,16 @@ def refun():
     put[{'glob', t.g, 'funcs', {e.e, {e.l}}}, s.key, t.new] =\
         {'glob', t.g, 'funcs', {e.e, {e.l, {s.key, t.new}}}}
 
-    mkcomv[{{e.ty, s.var}, e.oth}, {{'fcall', e.fc}, e.oexp}, t.ctx, t.fns] =\
-        mkcomv[{{e.ty, s.var}, e.oth}, join[expr[{'fcall', e.fc}, t.ctx, t.fns], {e.oexp}], t.ctx, t.fns]
+    resolve_chain_call[{{'fcall', s.fnm1, {e.args1}}, {'fcall', s.fnm2, {e.args2}}, e.oth}] =\
+        resolve_chain_call[{{'fcall', s.fnm2, {{{'fcall', s.fnm1, {e.args1}}}, e.args2}}, e.oth}]
+        
+    resolve_chain_call[{{'fcall', s.fnm1, {e.args1}}, {'fcall', s.fnm2, {e.args2}}}] =\
+        {{'fcall', s.fnm2, {{{'fcall', s.fnm1, {e.args1}}}, e.args2}}}
+        
+    resolve_chain_call[e.f] = e.f
+
+    mkcomv[{{e.ty, s.var}, e.oth}, {{{'fcall', e.fc}}, e.oexp}, t.ctx, t.fns] =\
+        mkcomv[{{e.ty, s.var}, e.oth}, join[expr[{{'fcall', e.fc}}, t.ctx, t.fns], {e.oexp}], t.ctx, t.fns]
 
     mkcomv[{{e.ty, s.var}, e.oth}, {t.cexp, e.oexp}, t.ctx, t.fns] =\
         mkcomv[{e.oth}, {e.oexp}, put[t.ctx, s.var, expr[t.cexp, t.ctx, t.fns]], t.fns]
@@ -79,16 +88,49 @@ def refun():
     literal['slice', s.v, t.ctx] = s.v
     literal['var', s.v, t.ctx] = get[t.ctx, s.v]
     
-    expr[{'fcall', s.fnm, {e.args}}, {e.g, 'funcs', {e.f}}, {e.e1, {'func', {s.fnm, t.s, t.a, t.r}, t.b}, e.e2}] =\
-        unpack[get[interp[t.b, {e.e1, {'func', {s.fnm, t.s, t.a, t.r}, t.b}, e.e2}, 
-            mkfargs[t.a, {e.args}, {e.g, 'funcs', {e.f}}, {e.g, 'funcs', {e.f, {}}}]], '@rets']]
+    expr[{{'fcall', s.fnm, {e.args}}}, {e.g, 'funcs', {e.f}}, 
+        {e.e1, {'func', {s.fnm, t.s, t.a, t.r}, t.b}, e.e2}] =\
+        get[interp[t.b, {e.e1, {'func', {s.fnm, t.s, t.a, t.r}, t.b}, e.e2}, 
+            mkfargs[t.a, {e.args}, {e.g, 'funcs', {e.f}}, {e.g, 'funcs', {e.f, {}}},
+                    {e.e1, {'func', {s.fnm, t.s, t.a, t.r}, t.b}, e.e2}]], '@rets']
 
-    expr[{'+', t.e1, t.e2}, t.ctx, t.fns] = add[expr[t.e1, t.ctx, t.fns], expr[t.e2, t.ctx, t.fns]]
-    expr[{'-', t.e1, t.e2}, t.ctx, t.fns] = sub[expr[t.e1, t.ctx, t.fns], expr[t.e2, t.ctx, t.fns]]
-    expr[{'*', t.e1, t.e2}, t.ctx, t.fns] = mul[expr[t.e1, t.ctx, t.fns], expr[t.e2, t.ctx, t.fns]]
-    expr[{'/', t.e1, t.e2}, t.ctx, t.fns] = div[expr[t.e1, t.ctx, t.fns], expr[t.e2, t.ctx, t.fns]]
-    expr[{s.v}, t.ctx, t.fns] = literal[typeof[s.v], s.v, t.ctx]
+    expr[{{'fcall', s.fnm, {e.args}}, e.oth}, {e.g, 'funcs', {e.f}}, 
+        {e.e1, {'func', {s.fnm, t.s, t.a, t.r}, t.b}, e.e2}] =\
+            u[expr[resolve_chain_call[{{'fcall', s.fnm, {e.args}}, e.oth}], 
+                 {e.g, 'funcs', {e.f}}, {e.e1, {'func', {s.fnm, t.s, t.a, t.r}, t.b}, e.e2}]]
+
+    expr[{'+', t.e1, t.e2}, t.ctx, t.fns] = add[
+        u[expr[t.e1, t.ctx, t.fns]], u[expr[t.e2, t.ctx, t.fns]]]
+    expr[{'-', t.e1, t.e2}, t.ctx, t.fns] = sub[
+        u[expr[t.e1, t.ctx, t.fns]], u[expr[t.e2, t.ctx, t.fns]]]
+    expr[{'*', t.e1, t.e2}, t.ctx, t.fns] = mul[
+        u[expr[t.e1, t.ctx, t.fns]], u[expr[t.e2, t.ctx, t.fns]]]
+    expr[{'/', t.e1, t.e2}, t.ctx, t.fns] = div[
+        u[expr[t.e1, t.ctx, t.fns]], u[expr[t.e2, t.ctx, t.fns]]]
+    
+    expr[{'==', t.e1, t.e2}, t.ctx, t.fns] = eq[
+        u[expr[t.e1, t.ctx, t.fns]], u[expr[t.e2, t.ctx, t.fns]]]
+    expr[{'!=', t.e1, t.e2}, t.ctx, t.fns] = neq[
+        u[expr[t.e1, t.ctx, t.fns]], u[expr[t.e2, t.ctx, t.fns]]]
+    expr[{'>', t.e1, t.e2}, t.ctx, t.fns] = grt[
+        u[expr[t.e1, t.ctx, t.fns]], u[expr[t.e2, t.ctx, t.fns]]]
+    expr[{'<', t.e1, t.e2}, t.ctx, t.fns] = less[
+        u[expr[t.e1, t.ctx, t.fns]], u[expr[t.e2, t.ctx, t.fns]]]
+    expr[{'<=', t.e1, t.e2}, t.ctx, t.fns] = lesseq[
+        u[expr[t.e1, t.ctx, t.fns]], u[expr[t.e2, t.ctx, t.fns]]]
+    expr[{'>=', t.e1, t.e2}, t.ctx, t.fns] = grteq[
+        u[expr[t.e1, t.ctx, t.fns]], u[expr[t.e2, t.ctx, t.fns]]]
+    expr[{'|', t.e1, t.e2}, t.ctx, t.fns] = _or[
+        u[expr[t.e1, t.ctx, t.fns]], u[expr[t.e2, t.ctx, t.fns]]]
+    expr[{'&', t.e1, t.e2}, t.ctx, t.fns] = _and[
+        u[expr[t.e1, t.ctx, t.fns]], u[expr[t.e2, t.ctx, t.fns]]]
+    
+    expr[{s.v}, t.ctx, t.fns] = literal[
+        typeof[s.v], s.v, t.ctx]
  
+    stmt[{'include', s.path}, t.ctx, t.fns] =\
+        mkast[s.path]
+    
     stmt[{'const', s.var, t.expr}, t.ctx, t.fns] =\
         putg[t.ctx, s.var, expr[t.expr, t.ctx, t.fns]]
     
@@ -98,6 +140,23 @@ def refun():
     stmt[{'assign', t.vars, t.expr}, t.ctx, t.fns] =\
         mkcomv[t.vars, t.expr, t.ctx, t.fns]
     
+    stmt[{'if', t.cond, t.do, {}}, t.ctx, t.fns] =\
+        cond[expr[t.cond, t.ctx, t.fns], interp[{t.do}, t.fns, t.ctx], t.ctx]
+    
+    stmt[{'if', t.cond, t.do, t.alt}, t.ctx, t.fns] =\
+        cond[expr[t.cond, t.ctx, t.fns], 
+             interp[{t.do}, t.fns, t.ctx], interp[{t.alt}, t.fns, t.ctx]]
+
+    stmt[{'repeat', t.expr, {e.body}}, t.ctx, t.fns] =\
+        interp[expand[{e.body}, {expr[t.expr, t.ctx, t.fns]}], t.fns, t.ctx]
+       
+    while_stmt[False, t._, t.ctx, t.fns] = t.ctx
+    while_stmt[s._, {t.e, {e.block}}, t.ctx, t.fns] =\
+        interp[{e.block, {'while', t.e, {e.block}}}, t.fns, t.ctx]
+        
+    stmt[{'while', t.e, t.block}, t.ctx, t.fns] =\
+        while_stmt[expr[t.e, t.ctx, t.fns], {t.e, t.block}, t.ctx, t.fns]
+    
     stmt[{'return', {}}, t.ctx, t.fns] = t.ctx
     stmt[{'return', t.rets}, t.ctx, t.fns] =\
         mkrvls[t.rets, t.ctx, t.fns, {}]
@@ -106,6 +165,9 @@ def refun():
     
     glob[e.h, {'const', s.var, t.expr}, e.oth, t.ctx] =\
         glob[e.h, e.oth, stmt[{'const', s.var, t.expr}, t.ctx, {}]]  
+        
+    glob[e.h, {'include', s.path}, e.oth, t.ctx] =\
+        glob[e.h, stmt[{'include', s.path}, t.ctx, {}], e.oth, t.ctx] 
           
     glob[e.h, {'func', {'main', e.o}, e.mb}, e.t, {e.g, 'funcs', {e.f}}] =\
         interp[e.mb, {e.h}, {e.g, 'funcs', {e.f, {}}}]
@@ -117,9 +179,8 @@ def refun():
     
     start[e.ast] = glob[e.ast, {'glob', {},  'funcs', {}}]
 
-    
 def main():
-    ast = get_ast("contrs/funcs2.func")
+    ast = main_ast("contracts/libuse.func")
     print("-- AST: ", ast, "\n")
 
     interp_res = refun('start', ast)
