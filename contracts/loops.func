@@ -2,11 +2,9 @@ int plus(int x, int y) inline {
     return x + y;
 }
 
-
 int mult(int x, int y) inline {
     return x * y;
 }
-
 
 () main() impure {
     (int a, int b, int c) = (10, 100, 1);
@@ -47,5 +45,5 @@ int mult(int x, int y) inline {
             }
         }
     }
-
+    return ();
 }

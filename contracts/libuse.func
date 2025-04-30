@@ -1,0 +1,25 @@
+const B = 1;
+const A = 10;
+
+() incr2(int x) {
+    return x + 2;
+}
+
+#include "includes/mathlib.func";
+
+() main() {
+    (int x,int y) = (
+        10 + intPIx1000, 5 * intEx1000
+    );
+
+    int r1 = sum(x, y);
+    int r2 = sub(x, y);
+    int r3 = mul(x, y);
+    int r4 = div(x, y);
+
+    int five = S(S(S(S(Z()))));
+    int ten = S(S(S(S(S(S(S(S(S(Z())))))))));
+
+    int twelve = incr2(ten);
+    return ();
+}

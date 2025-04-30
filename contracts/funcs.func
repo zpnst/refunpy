@@ -2,22 +2,22 @@ int plus(int x, int y) inline {
     return x + y;
 }
 
-
 int mult(int x, int y) inline {
     return x * y;
 }
-
 
 int disc(int a, int b, int c) inline {  
     int disc = b * b - 4 * a * c;
     return disc;
 }
 
+(int, int) mult_plus(int x, int y) inline {
+    return (plus(x * y, x * y) + 200, (plus(x * y, x * y) + 2) / 3);
+}
 
 (int, int, int, int) plus_and_mult_and_sub_and_div(int x, int y) inline {
     return (x + y, x * y, x - y, x / y);
 }
-
 
 () main() impure {
     int a = 1;
@@ -28,4 +28,7 @@ int disc(int a, int b, int c) inline {
     int res3 = plus(1, 0).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1);
 
     (int p, int m, int s, int d) = plus_and_mult_and_sub_and_div(10, 2);
+
+    (int res4, int res5) = mult_plus(1, 2);
+    return ();
 }

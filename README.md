@@ -3,7 +3,7 @@
 ## How to use:
 
 ```
-./refunpy <input> [--ast-on] [--env-on]
+./refunpy <path> [--ast-on] [--env-on]
 ```
 
 ## Example:
@@ -11,39 +11,44 @@
 FunC programm:
 
 ```C
-() draw(int rows, int lines, int multp) {
-    (int min, int max) = (rows, lines * multp);
+{-
+    Simple, 
+        FunC programm!
+-}
 
-    while (min != 0) {
-        while (max != 0) {
-            if ((min == rows) | (min == 0) | (max == (lines * multp)) | (max == 0)) {
-                ~strdump("#");
-            } else {
-                ~strdump(" ");
-            }
-            
-            max -= 1;
-        }  
-        ~strdump("\n"); 
-        min -= 1;
-        max = lines * multp;
-    }
+const A = 222;
+
+int plus(int x, int y) impure inline {
+    return x + y;
 }
 
-() main() {
-    (int rows, int lines) = (5, 5);
-    draw(rows, lines, 10);
+;; Hello!
+(int, int) mult_plus(int x, int y) impure inline_ref {
+    return (
+        plus(x * y, x * y) + A, 
+        (plus(x * y, x * y) + 2) / 3
+    );
+}
+
+;; This is STRDUMP TVM instruction!
+() ~strLog(slice value) impure asm "STRDUMP";
+
+() main() impure { ;; Main function!
+    int hello = "Hello!\n"; ;; Hello!
+    ~strLog(hello);
+
+    (int res4, int res5) = mult_plus(1, 2);
+
+    return (); {-
+        Hello, World!
+    -}
 }
 ```
 
 Output:
 
 ```shell
-zpnst@debian ~/D/p/p/c/p/refunpy (master)> ./refunpy contrs/draw.func
-###################################################
-#                                                 #
-#                                                 #
-#                                                 #
-#                                                 #
-###################################################
+zpnst@debian ~/D/p/p/c/p/refunpy (v2)> ./refunpy contracts/p.func --env-on
+Hello!
+-- RES:  (('glob', (('A', 222),), 'funcs', ((('hello', '"Hello!\\n"'), ('res4', 226), ('res5', 2)),)),)
 ```

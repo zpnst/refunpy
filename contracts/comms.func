@@ -1,0 +1,17 @@
+{-
+    Hello, 
+        World!
+-}
+
+;; Hello!
+
+;; This is STRDUMP TVM instruction!
+() HelloWorld(slice value) impure asm "STRDUMP";
+
+() main() { ;; Hello!
+    int hello = "Hello!\n"; ;; Hello!
+    HelloWorld(hello);
+    return (); {-
+        Hello, World!
+    -}
+}

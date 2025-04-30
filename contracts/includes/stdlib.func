@@ -1,0 +1,2 @@
+() ~logInt(int value) impure asm "s0 DUMP";
+() ~logStr(slice value) impure asm "STRDUMP";
