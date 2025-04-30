@@ -6,6 +6,12 @@
 ./refunpy <path> [--ast-on] [--env-on]
 ```
 
+## Cloning:
+
+```
+git clone --recurse-submodules git@github.com:zpnst/refunpy.git
+```
+
 ## Example:
 
 FunC programm:
