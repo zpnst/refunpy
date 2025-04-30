@@ -23,7 +23,7 @@ int plus(int x, int y) impure inline {
 }
 
 ;; Hello!
-(int, int) mult_plus(int x, int y) impure {
+(int, int) mult_plus(int x, int y) impure inline_ref {
     return (
         plus(x * y, x * y) + A, 
         (plus(x * y, x * y) + 2) / 3

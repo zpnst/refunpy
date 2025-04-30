@@ -56,10 +56,11 @@ typ = alt(
 
 specs = alt(
     tok(r'impure'),
+    tok(r'inline_ref'), 
     tok(r'inline'),
-    tok(r'inline_ref'),
-    seq(tok(r'impure'), tok(r'inline')),
     seq(tok(r'impure'), tok(r'inline_ref')),
+    seq(tok(r'impure'), tok(r'inline')),
+    
 )
 
 expr = lambda s: expr(s)
