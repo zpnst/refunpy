@@ -69,33 +69,7 @@ def refun():
 
     go[e.ast] = glob[e.ast, {'glob', {},  'funcs', {}}]
 
-def main():
-    argsp = argparse.ArgumentParser(
-        description="FunC Interpreter",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="Examples:\n  refunpy contract.func -a\n  refunpy contract.func --fmt-on"
-    )
-    argsp.add_argument(
-        "filename",
-        nargs="?",
-        help="FunC source code filename"
-    )
-    argsp.add_argument(
-        "-a", "--ast",
-        action="store_true",
-        help="enable AST output to STDOUT"
-    )
-    argsp.add_argument(
-        "-e", "--env",
-        action="store_true",
-        help="enable ENV output to STDOUT"
-    )
-    argsp.add_argument(
-        "-d", "--doc",
-        action="store_true",
-        help="enable FMT output to FMT DIR"
-    )
-    
+def run_interpreter(argsp):
     args = argsp.parse_args()
     
     if args.doc and not args.filename:
@@ -123,4 +97,4 @@ def main():
             f.write(fmt(refun))
       
 if __name__ == "__main__":  
-    main()
+    run_interpreter()

@@ -1,18 +1,40 @@
-#! /usr/bin/python
+#!/usr/bin/env python3
 
-import sys
-import subprocess
+import argparse
+from src.interp import run_interpreter  
 
-if len(sys.argv) < 2:
-    print("Usage: ./refunpy <input> [OPTIONS]")
-    print("Options:")
-    print("  -a, --ast    enable AST output to STDOUT")
-    print("  -e, --env    enable ENV output to STDOUT")
-    print("  -d, --doc    creates documentation and places it in the docs directory")
-    print("  -h, --help   display this help and exit")
-    sys.exit(1)
+def cmd():
+    argsp = argparse.ArgumentParser(
+        description="FunC Interpreter",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="Examples:\n  refunpy contract.func -a\n  refunpy --doc"
+    )
 
-input_data = sys.argv[1]
-flags = sys.argv[2:] if len(sys.argv) > 2 else []
+    argsp.add_argument(
+        "filename",
+        nargs='?',
+        help="FunC source code filename (optional if --doc is used)"
+    )
 
-subprocess.run(["python", "-m", "src.interp", input_data] + flags)
+    argsp.add_argument(
+        "-a", "--ast",
+        action="store_true",
+        help="enable AST output to STDOUT (requires filename)"
+    )
+
+    argsp.add_argument(
+        "-e", "--env",
+        action="store_true",
+        help="enable ENV output to STDOUT (requires filename)"
+    )
+
+    argsp.add_argument(
+        "-d", "--doc",
+        action="store_true",
+        help="generate documentation (can be used without filename)"
+    )
+        
+    run_interpreter(argsp)
+
+if __name__ == "__main__":  
+    cmd()
