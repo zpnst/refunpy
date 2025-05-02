@@ -3,7 +3,7 @@
 ## How to use:
 
 ```
-./refunpy <path> [--ast-on] [--env-on] [--fmt-on]
+./refunpy --help
 ```
 
 ## Cloning:
