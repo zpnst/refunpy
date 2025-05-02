@@ -1,4 +1,4 @@
-# Tiny FunC interpreter
+# Executable specification of FunC / Tiny FunC interpreter on ReFalPy 
 
 ## How to use:
 
