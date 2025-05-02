@@ -1,6 +1,3 @@
-# [submodule "libs/refalpy"]
-# 	path = libs/refalpy
-# 	url = git@github.com:true-grue/refalpy.git
 [submodule "libs/peco"]
 	path = libs/peco
 	url = git@github.com:true-grue/peco.git
