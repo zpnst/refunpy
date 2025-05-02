@@ -2,9 +2,10 @@ import sys
 import json
 import argparse
 
+from refmt import fmt
+
 from parser import main_ast, lib_ast
 from libs.refalpy.refalpy import refal
-
 
 imports = {
     'add': lambda arg: (arg[0] + arg[1],),
@@ -31,16 +32,20 @@ imports = {
             
     'mkast': lambda path: lib_ast("contracts/" + path[0]),
     
-    'prout': lambda arg: (eval(f"print({arg[0]}, end='')"), ())[~0],
+    # 'prout': lambda arg: (eval(f"print({arg[0]}, end='')"), ())[~0],
+    'prout': lambda args: (print(args, "\n"), ())[~0],
 }
 
 @refal(imports)
 def refun():
     
-    # -- U
+    p[e.e] = prout[e.e]
     
-    u[s.s] = s.s
-    u[{e.e}] = u[e.e]
+    # -- UNPACK
+    
+    unpack[s.s] = s.s
+    unpack[{t.e1, t.e2, e.e}] = {t.e1, t.e2, e.e}
+    unpack[{e.e}] = unpack[e.e]
     
     # -- FIRST
      
@@ -90,18 +95,18 @@ def refun():
 
     # -- MKCOMV
 
-    mkcomv[{{e.ty, s.var}, e.oth}, {{{'fcall', e.fc}}, e.oexp}, t.ctx, t.fns] =\
-        mkcomv[{{e.ty, s.var}, e.oth}, join[expr[{{'fcall', e.fc}}, t.ctx, t.fns], {e.oexp}], t.ctx, t.fns]
+    mkcomv[{{e.ty, s.var}, e.oth}, {{{'fcall', e.fc}}, e.oexp}, e.state] =\
+        mkcomv[{{e.ty, s.var}, e.oth}, join[expr[{{'fcall', e.fc}}, e.state], {e.oexp}], e.state]
 
     mkcomv[{{e.ty, s.var}, e.oth}, {t.cexp, e.oexp}, t.ctx, t.fns] =\
-        mkcomv[{e.oth}, {e.oexp}, put[t.ctx, s.var, expr[t.cexp, t.ctx, t.fns]], t.fns]
+       mkcomv[{e.oth}, {e.oexp}, put[t.ctx, s.var, expr[t.cexp, t.ctx, t.fns]], t.fns]
     
     mkcomv[{}, {}, t.ctx, t.fns] = t.ctx
     
     # -- MKRVLS
 
-    mkrvls[{t.ret, e.oret}, t.ctx, t.fns, {e.buf}] =\
-        mkrvls[{e.oret}, t.ctx, t.fns, {e.buf, {expr[t.ret, t.ctx, t.fns]}}]
+    mkrvls[{t.ret, e.oret}, e.state, {e.buf}] =\
+        mkrvls[{e.oret}, e.state, {e.buf, {expr[t.ret, e.state]}}]
     mkrvls[{}, t.ctx, t.fns, t.buf] = put[t.ctx, '@rets', t.buf]
     
     # -- LITERAL
@@ -114,94 +119,94 @@ def refun():
     
     expr[{{'fcall', s.fnm, {e.args}}}, {e.g, 'funcs', {e.f}}, 
         {e.e1, {'func', {s.fnm, t.s, t.a, t.r}, t.b}, e.e2}] =\
-        get[interp[t.b, {e.e1, {'func', {s.fnm, t.s, t.a, t.r}, t.b}, e.e2}, 
-            mkfargs[t.a, {e.args}, {e.g, 'funcs', {e.f}}, {e.g, 'funcs', {e.f, {}}},
-                    {e.e1, {'func', {s.fnm, t.s, t.a, t.r}, t.b}, e.e2}]], '@rets']
+        unpack[get[interp[t.b, mkfargs[t.a, {e.args}, {e.g, 'funcs', {e.f}}, {e.g, 'funcs', {e.f, {}}},
+            {e.e1, {'func', {s.fnm, t.s, t.a, t.r}, t.b}, e.e2}], 
+                   {e.e1, {'func', {s.fnm, t.s, t.a, t.r}, t.b}, e.e2}], '@rets']]
 
     expr[{{'fcall', s.fnm, {e.args}}, e.oth}, {e.g, 'funcs', {e.f}}, 
         {e.e1, {'func', {s.fnm, t.s, t.a, t.r}, t.b}, e.e2}] =\
-            u[expr[resolve_chain_call[{{'fcall', s.fnm, {e.args}}, e.oth}], 
+            unpack[expr[resolve_chain_call[{{'fcall', s.fnm, {e.args}}, e.oth}], 
                  {e.g, 'funcs', {e.f}}, {e.e1, {'func', {s.fnm, t.s, t.a, t.r}, t.b}, e.e2}]]
 
-    expr[{'+', t.e1, t.e2}, t.ctx, t.fns] = add[
-        u[expr[t.e1, t.ctx, t.fns]], u[expr[t.e2, t.ctx, t.fns]]]
-    expr[{'-', t.e1, t.e2}, t.ctx, t.fns] = sub[
-        u[expr[t.e1, t.ctx, t.fns]], u[expr[t.e2, t.ctx, t.fns]]]
-    expr[{'*', t.e1, t.e2}, t.ctx, t.fns] = mul[
-        u[expr[t.e1, t.ctx, t.fns]], u[expr[t.e2, t.ctx, t.fns]]]
-    expr[{'/', t.e1, t.e2}, t.ctx, t.fns] = div[
-        u[expr[t.e1, t.ctx, t.fns]], u[expr[t.e2, t.ctx, t.fns]]]
+    expr[{'+', t.e1, t.e2}, e.state] = add[
+        expr[t.e1, e.state], expr[t.e2, e.state]]
+    expr[{'-', t.e1, t.e2}, e.state] = sub[
+        expr[t.e1, e.state], expr[t.e2, e.state]]
+    expr[{'*', t.e1, t.e2}, e.state] = mul[
+        expr[t.e1, e.state], expr[t.e2, e.state]]
+    expr[{'/', t.e1, t.e2}, e.state] = div[
+        expr[t.e1, e.state], expr[t.e2, e.state]]
     
-    expr[{'==', t.e1, t.e2}, t.ctx, t.fns] = eq[
-        u[expr[t.e1, t.ctx, t.fns]], u[expr[t.e2, t.ctx, t.fns]]]
-    expr[{'!=', t.e1, t.e2}, t.ctx, t.fns] = neq[
-        u[expr[t.e1, t.ctx, t.fns]], u[expr[t.e2, t.ctx, t.fns]]]
-    expr[{'>', t.e1, t.e2}, t.ctx, t.fns] = grt[
-        u[expr[t.e1, t.ctx, t.fns]], u[expr[t.e2, t.ctx, t.fns]]]
-    expr[{'<', t.e1, t.e2}, t.ctx, t.fns] = less[
-        u[expr[t.e1, t.ctx, t.fns]], u[expr[t.e2, t.ctx, t.fns]]]
-    expr[{'<=', t.e1, t.e2}, t.ctx, t.fns] = lesseq[
-        u[expr[t.e1, t.ctx, t.fns]], u[expr[t.e2, t.ctx, t.fns]]]
-    expr[{'>=', t.e1, t.e2}, t.ctx, t.fns] = grteq[
-        u[expr[t.e1, t.ctx, t.fns]], u[expr[t.e2, t.ctx, t.fns]]]
-    expr[{'|', t.e1, t.e2}, t.ctx, t.fns] = _or[
-        u[expr[t.e1, t.ctx, t.fns]], u[expr[t.e2, t.ctx, t.fns]]]
-    expr[{'&', t.e1, t.e2}, t.ctx, t.fns] = _and[
-        u[expr[t.e1, t.ctx, t.fns]], u[expr[t.e2, t.ctx, t.fns]]]
+    expr[{'==', t.e1, t.e2}, e.state] = eq[
+        expr[t.e1, e.state], expr[t.e2, e.state]]
+    expr[{'!=', t.e1, t.e2}, e.state] = neq[
+        expr[t.e1, e.state], expr[t.e2, e.state]]
+    expr[{'>', t.e1, t.e2}, e.state] = grt[
+        expr[t.e1, e.state], expr[t.e2, e.state]]
+    expr[{'<', t.e1, t.e2}, e.state] = less[
+        expr[t.e1, e.state], expr[t.e2, e.state]]
+    expr[{'<=', t.e1, t.e2}, e.state] = lesseq[
+        expr[t.e1, e.state], expr[t.e2, e.state]]
+    expr[{'>=', t.e1, t.e2}, e.state] = grteq[
+        expr[t.e1, e.state], expr[t.e2, e.state]]
+    expr[{'|', t.e1, t.e2}, e.state] = _or[
+        expr[t.e1, e.state], expr[t.e2, e.state]]
+    expr[{'&', t.e1, t.e2}, e.state] = _and[
+        expr[t.e1, e.state], expr[t.e2, e.state]]
     
     expr[{s.v}, t.ctx, t.fns] = literal[
         typeof[s.v], s.v, t.ctx]
  
-    # -- INTRINSICS
+    # -- BUILTIN
 
-    intrinsics['STRDUMP', {{'slice', s.var}}, t.ctx] =\
+    builtin['STRDUMP', {{'slice', s.var}}, t.ctx] =\
         t.ctx, prout[get[t.ctx, s.var]]
         
-    intrinsics['s0 DUMP', {{'int', s.var}}, t.ctx] =\
+    builtin['s0 DUMP', {{'int', s.var}}, t.ctx] =\
         t.ctx, prout[get[t.ctx, s.var]]
     
     # -- WHILE_STMT
     
     while_stmt[False, t._, t.ctx, t.fns] = t.ctx
-    while_stmt[s._, {t.e, {e.block}}, t.ctx, t.fns] =\
-        interp[{e.block, {'while', t.e, {e.block}}}, t.fns, t.ctx]
+    while_stmt[s._, {t.e, {e.block}}, e.state] =\
+        interp[{e.block, {'while', t.e, {e.block}}}, e.state]
 
     # -- STMT
     
-    stmt[{'include', s.path}, t.ctx, t.fns] =\
+    stmt[{'include', s.path}, e.state] =\
         mkast[s.path]
     
     stmt[{'const', s.var, t.expr}, t.ctx, t.fns] =\
         putg[t.ctx, s.var, expr[t.expr, t.ctx, t.fns]]
     
-    stmt[{'bind', t.vars, t.expr}, t.ctx, t.fns] =\
-        mkcomv[t.vars, t.expr, t.ctx, t.fns]
+    stmt[{'bind', t.vars, t.expr}, e.state] =\
+        mkcomv[t.vars, t.expr, e.state]
         
-    stmt[{'assign', t.vars, t.expr}, t.ctx, t.fns] =\
-        mkcomv[t.vars, t.expr, t.ctx, t.fns]
+    stmt[{'assign', t.vars, t.expr}, e.state] =\
+        mkcomv[t.vars, t.expr, e.state]
     
     stmt[{'if', t.cond, t.do, {}}, t.ctx, t.fns] =\
-        interp[cond[expr[t.cond, t.ctx, t.fns], {{t.do}, t.fns, t.ctx}, {t.ctx}]]
+        interp[cond[expr[t.cond, t.ctx, t.fns], {{t.do}, t.ctx, t.fns}, {t.ctx}]]
     
-    stmt[{'if', t.cond, t.do, t.alt}, t.ctx, t.fns] =\
-        interp[cond[expr[t.cond, t.ctx, t.fns], 
-             {{t.do}, t.fns, t.ctx}, {{t.alt}, t.fns, t.ctx}]]
+    stmt[{'if', t.cond, t.do, t.alt}, e.state] =\
+        interp[cond[expr[t.cond, e.state], 
+             {{t.do}, e.state}, {{t.alt}, e.state}]]
 
-    stmt[{'repeat', t.expr, {e.body}}, t.ctx, t.fns] =\
-        interp[expand[{e.body}, {expr[t.expr, t.ctx, t.fns]}], t.fns, t.ctx]
+    stmt[{'repeat', t.expr, {e.body}}, e.state] =\
+        interp[expand[{e.body}, {expr[t.expr, e.state]}], e.state]
         
-    stmt[{'while', t.e, t.block}, t.ctx, t.fns] =\
-        while_stmt[expr[t.e, t.ctx, t.fns], {t.e, t.block}, t.ctx, t.fns]
+    stmt[{'while', t.e, t.block}, e.state] =\
+        while_stmt[expr[t.e, e.state], {t.e, t.block}, e.state]
     
     stmt[{'return', {}}, t.ctx, t.fns] = t.ctx
-    stmt[{'return', t.rets}, t.ctx, t.fns] =\
-        mkrvls[t.rets, t.ctx, t.fns, {}]
+    stmt[{'return', t.rets}, e.state] =\
+        mkrvls[t.rets, e.state, {}]
     
     stmt[{'fcall', s.fnm, {e.args}}, t.ctx, t.fns] =\
         first[t.ctx, expr[{{'fcall', s.fnm, {e.args}}}, t.ctx, t.fns]]
 
     stmt[{'intrinsic', t.args, s.instr}, t.ctx, t.fns] =\
-        intrinsics[s.instr, t.args, t.ctx]
+        builtin[s.instr, t.args, t.ctx]
     
     # -- GLOB
     
@@ -212,14 +217,14 @@ def refun():
         glob[e.h, stmt[{'include', s.path}, t.ctx, {}], e.oth, t.ctx] 
           
     glob[e.h, {'func', {'main', e.o}, e.mb}, e.t, {e.g, 'funcs', {e.f}}] =\
-        interp[e.mb, {e.h}, {e.g, 'funcs', {e.f, {}}}]
+        interp[e.mb, {e.g, 'funcs', {e.f, {}}}, {e.h}]
 
     # -- INTERP
     
-    interp[{t.stmt, e.block}, t.fns, t.ctx] =\
-        interp[{e.block}, t.fns, stmt[t.stmt, t.ctx, t.fns]]
+    interp[{t.stmt, e.block}, t.ctx, t.fns] =\
+        interp[{e.block}, stmt[t.stmt, t.ctx, t.fns], t.fns]
         
-    interp[{}, t.fns, t.ctx] = t.ctx
+    interp[{}, t.ctx, t.fns] = t.ctx
     interp[t.ctx] = t.ctx
     
     # -- GO
@@ -229,8 +234,9 @@ def refun():
 def main():
     argsp = argparse.ArgumentParser(description="FunC Interpreter")
     argsp.add_argument("filename", help="FunC source code filename")
-    argsp.add_argument("--ast-on", action="store_true", help="Enable AST output")
-    argsp.add_argument("--env-on", action="store_true", help="Enable ENV output")
+    argsp.add_argument("--ast-on", action="store_true", help="Enable AST output to STDOUT")
+    argsp.add_argument("--env-on", action="store_true", help="Enable ENV output to STDOUT")
+    argsp.add_argument("--fmt-on", action="store_true", help="Enable FMT output to FMT DIR")
     
     args = argsp.parse_args()
 
@@ -243,6 +249,11 @@ def main():
     
     if args.env_on:
         print("-- RES: ", interp_res)
+        
+    if args.fmt_on:
+        with open("./fmt/interp.ref", encoding="utf-8", mode="a") as f:
+            print("-- FMT: The rules have been written to a file: ./fmt/interp.ref")
+            f.write(fmt(refun))
       
 if __name__ == "__main__":  
     main()
