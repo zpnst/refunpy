@@ -54,7 +54,7 @@ int plus(int x, int y) impure inline {
 Output:
 
 ```shell
-zpnst@debian ~/D/p/p/c/p/refunpy (v2)> ./refunpy contracts/p.func --env-on
+zpnst@debian ~/D/p/p/c/p/refunpy (v2)> ./refunpy contracts/p.func --env
 Hello!
 -- RES:  (('glob', (('A', 222),), 'funcs', ((('hello', '"Hello!\\n"'), ('res4', 226), ('res5', 2)),)),)
 ```
