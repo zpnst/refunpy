@@ -1,11 +1,13 @@
 from libs.refalpy.refalpy import refal
 
-@refal({
+imports = {
     'type': lambda x: (type(x[0]).__name__,),
     'concat': lambda x: (''.join(map(str, x)),),
     'tuple': lambda x: tuple(x[0]),
     'repr': lambda x: (repr(x[0]),)
-})
+}
+
+@refal(imports)
 def fmt_rules():
     call[s.name, {}] = '<', s.name, '>'
     call[s.name, t.args] = '<', s.name, ' ', expr[t.args], '>'
