@@ -4,10 +4,15 @@ import sys
 import subprocess
 
 if len(sys.argv) < 2:
-    print("Usage: ./refunpy <input> [--ast-on] [--env-on] [--fmt-on]")
+    print("Usage: ./refunpy <input> [OPTIONS]")
+    print("Options:")
+    print("  -a, --ast    enable AST output to STDOUT")
+    print("  -e, --env    enable ENV output to STDOUT")
+    print("  -d, --doc    creates documentation and places it in the docs directory")
+    print("  -h, --help   display this help and exit")
     sys.exit(1)
 
 input_data = sys.argv[1]
 flags = sys.argv[2:] if len(sys.argv) > 2 else []
 
-subprocess.run(["python3", "interp.py", input_data] + flags)
+subprocess.run(["python", "-m", "src.interp", input_data] + flags)

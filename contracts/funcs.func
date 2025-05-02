@@ -1,12 +1,12 @@
-int plus(int x, int y) inline {
+(int) plus(int x, int y) inline {
     return x + y;
 }
 
-int mult(int x, int y) inline {
+(int) mult(int x, int y) inline {
     return x * y;
 }
 
-int disc(int a, int b, int c) inline {  
+(int) disc(int a, int b, int c) inline {  
     int disc = b * b - 4 * a * c;
     return disc;
 }
@@ -20,14 +20,14 @@ int disc(int a, int b, int c) inline {
 }
 
 () main() impure {
-    int a = 1;
-    int b = 20;
+    ;; int a = 1;
+    ;; int b = 20;
 
-    int res1 = plus(a, 0).disc(plus(1, 0).plus(1).plus(1).plus(1).plus(1), mult(a, 0).plus(2));
-    int res2 = ((3 * mult(plus(plus(mult(disc(a, 5, plus(a * a - b, a + 1)), b), 1), 2), ((b * 2) - 1))) / 10);
-    int res3 = plus(1, 0).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1);
+    ;; int res1 = plus(a, 0).disc(plus(1, 0).plus(1).plus(1).plus(1).plus(1), mult(a, 0).plus(2));
+    ;; int res2 = ((3 * mult(plus(plus(mult(disc(a, 5, plus(a * a - b, a + 1)), b), 1), 2), ((b * 2) - 1))) / 10);
+    ;; int res3 = plus(1, 0).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1).plus(1);
 
-    (int p, int m, int s, int d) = plus_and_mult_and_sub_and_div(10, 2);
+    ;; (int p, int m, int s, int d) = plus_and_mult_and_sub_and_div(10, 2);
 
     (int res4, int res5) = mult_plus(1, 2);
     return ();
